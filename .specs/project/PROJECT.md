@@ -17,4 +17,4 @@ GitHub Actions e backend S3 com locking nativo.
 Lambda, cluster EKS, migrations e criação de usuários SQL são responsabilidade
 dos projetos de aplicação. Ambiente temporário informado: conta 213284176265,
 us-east-1. Configuração da pipeline não executa deploy real nesta sessão;
-faltam token AWS e preparação do backend/GitHub Environments.
+backend S3 e plan de homologação preparados; falta configurar GitHub Environments.

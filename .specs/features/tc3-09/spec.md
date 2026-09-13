@@ -10,8 +10,8 @@ Terraform nos PRs e aplicação após merge, separando homologação e produçã
 | ID | Quando / então | Verificação |
 | --- | --- | --- |
 | CICD-01 | Em push ou PR aberto/atualizado, executar fmt, init sem backend, validate e testes simulados. | Terraform e análise do workflow |
-| CICD-02 | Em PR interno para develop/main, executar plan no ambiente correspondente; nunca executar apply enquanto aberto. | Condições de eventos e actionlint |
-| CICD-03 | Quando PR interno for merged, gerar novo plano do commit de merge e aplicar esse arquivo somente após validação bem-sucedida. | Evento closed + merged; plano salvo |
+| CICD-02 | Em PR interno para develop/main, executar plan no ambiente correspondente; nunca executar apply enquanto aberto. PR de fork roda apenas validação enquanto aberto. | Condições de eventos e actionlint |
+| CICD-03 | Quando PR for merged, gerar novo plano do commit de merge no contexto seguro do repositório base e aplicar esse arquivo somente após validação bem-sucedida. | Evento pull_request_target closed + merged; plano salvo |
 | CICD-04 | develop usa homologacao/staging e main usa producao/prod, com configurações, CIDRs, nomes e chaves de state distintos. | Testes dos arquivos de ambiente |
 | CICD-05 | Usar backend S3 criptografado, com lock nativo, e serializar operações por ambiente. | Configuração HCL e workflow |
 | CICD-06 | Autenticar por OIDC ou secrets por ambiente; conferir conta e exigir token para chaves temporárias. | Preflight e ação AWS |
@@ -19,14 +19,12 @@ Terraform nos PRs e aplicação após merge, separando homologação e produçã
 
 ## Limites
 
-Implementar a pipeline e seus arquivos. Não executar deploy real nesta sessão:
-o token AWS ainda não foi informado e os recursos de backend não existem
-confirmadamente. Não alterar os projetos Lambda/EKS.
+Implementar a pipeline e seus arquivos. Não alterar os projetos Lambda/EKS.
 
 ## Estado
 
 Implementação concluída e verificada localmente. Windows e Linux: fmt,
 init sem backend, validate, nove testes existentes e um teste por ambiente
-aprovados. Workflow aprovado por actionlint e dez cenários de preflight/apply
-com comandos simulados. Plan/apply reais e publicação dependem da configuração
-do GitHub e do backend AWS.
+aprovados. Workflow aprovado por actionlint e cenários de preflight/apply com
+comandos simulados. Plan real de homologação gerado localmente; apply real
+depende do evento de merge com GitHub Environment configurado.

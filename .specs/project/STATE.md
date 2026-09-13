@@ -107,3 +107,24 @@ fornecer também vpc_id e map_public_ip_on_launch nos overrides de subnet.
 - Completar a sessão AWS com token correspondente ou configurar role OIDC.
 - Executar PR/merge em homologação e promover por PR para produção.
 - Nenhum plan/apply real ou recurso de backend criado nesta sessão.
+
+## Atualização: sessão AWS completa e plan real — 2026-09-13
+
+- AWS_SESSION_TOKEN recebido e salvo somente em ~/.aws/credentials.
+- sts get-caller-identity confirmou conta 213284176265 e sessão voclabs.
+  AWS CLI executada com a imagem oficial em Docker; instalação nativa ausente.
+- Inventário inicial: nenhum bucket na conta e nenhum RDS em us-east-1.
+- Criado bucket tech-challenge-infra-db-tfstate-213284176265 em us-east-1,
+  com versionamento habilitado e bloqueio de acesso público.
+- Backend local inicializado para a key de homologacao. Parâmetros de bucket,
+  região e conta em .terraform/homologacao-runtime.backend.hcl, ignorado.
+- Plan real de staging salvo em deployment.tfplan, ignorado: 28 criações,
+  zero alterações/exclusões; região/conta, privacidade, criptografia, Single-AZ
+  e backups de 7 dias verificados no JSON do plano.
+- Resumo em .specs/features/tc3-09/plan-homologacao.md. Nenhum apply executado;
+  somente o bucket S3 foi criado, não o banco.
+- Quick task 002 concluída: credenciais e identidade autenticada.
+- Falta configurar AWS_ACCOUNT_ID, AWS_REGION, TF_STATE_BUCKET e secrets da
+  sessão nos GitHub Environments. Consulta de variables/secrets continua 403.
+- Apply permanece condicionado a merge no fluxo TC3-09. Não reproduzir
+  valores de credenciais em arquivos versionados, logs ou mensagens.
