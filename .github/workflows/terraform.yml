@@ -42,7 +42,7 @@ jobs:
           done
 
   terraform:
-    name: Terraform (${{ github.event.pull_request.base.ref == 'main' && 'producao' || 'homologacao' }})
+    name: Terraform deploy
     needs: validate
     # Open fork PRs run validation only. After merge, pull_request_target runs
     # from the base repository context so environment secrets can be used.
