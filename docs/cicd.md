@@ -12,11 +12,18 @@
 | PR fechado sem merge | Nenhum deploy | — |
 | PR de fork aberto ou execução do Dependabot | Validação sem credenciais | — |
 
-O evento de deploy é `pull_request_target: closed` com `merged == true`. Isso
-permite que PRs vindos de fork façam deploy somente depois do merge, usando o
-workflow e os secrets do repositório base. Push direto não faz apply. Promova
-mudanças por PR para develop e depois por PR de develop para main. Crie a
-branch develop a partir de main na preparação inicial.
+O workflow `Terraform CI/CD` valida push e PRs abertos. O workflow
+`Terraform Deploy` roda plan em PRs internos abertos e faz deploy no evento
+`pull_request_target: closed` com `merged == true`. Isso permite que PRs vindos
+de fork façam deploy somente depois do merge, usando o workflow e os secrets do
+repositório base. Push direto não faz apply. Promova mudanças por PR para
+develop e depois por PR de develop para main. Crie a branch develop a partir de
+main na preparação inicial.
+
+Runs antigos continuam mostrando o resultado do YAML antigo. Depois da
+separação dos workflows, runs de push deixam de exibir o job de deploy como
+skipped; o deploy aparece somente em eventos de PR cobertos pelo workflow
+`Terraform Deploy`.
 
 O job `terraform` depende do sucesso de `validate`. O plano do PR aparece nos
 logs e não é reaproveitado após o merge: um novo `deployment.tfplan` é gerado
