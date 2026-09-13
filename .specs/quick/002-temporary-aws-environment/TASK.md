@@ -1,7 +1,7 @@
 # Quick Task 002: Configurar ambiente AWS temporário
 
 **Date:** 2026-09-13
-**Status:** Awaiting Session Token
+**Status:** Done
 
 ## Description
 
@@ -22,7 +22,9 @@ mantendo credenciais fora do repositório.
 - [x] Credenciais fora do Git; tfvars ignorado.
 - [x] terraform fmt -check -recursive e terraform validate aprovados.
 - [x] terraform test: nove aprovados, nenhuma falha, com AWS simulada.
-- [ ] Completar aws_session_token e confirmar a identidade autenticada na AWS.
+- [x] Completar aws_session_token e confirmar a identidade autenticada na AWS.
+  - Token recebido posteriormente e salvo no profile default local.
+  - sts get-caller-identity confirmou a conta 213284176265, sessão voclabs.
 
 ## Commit
 

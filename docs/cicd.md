@@ -6,15 +6,17 @@
 | --- | --- | --- |
 | Push em qualquer branch | fmt, init sem backend, validate e testes com AWS simulada | Sem acesso AWS |
 | PR interno aberto/atualizado para develop | Validação e plan | homologacao |
-| Merge de PR interno em develop | Validação, novo plan do commit merged e apply do plano salvo | homologacao |
+| Merge de PR em develop | Validação, novo plan do commit merged e apply do plano salvo | homologacao |
 | PR interno aberto/atualizado para main | Validação e plan | producao |
-| Merge de PR interno em main | Validação, novo plan do commit merged e apply do plano salvo | producao |
+| Merge de PR em main | Validação, novo plan do commit merged e apply do plano salvo | producao |
 | PR fechado sem merge | Nenhum deploy | — |
-| PR de fork ou execução do Dependabot | Validação sem credenciais | — |
+| PR de fork aberto ou execução do Dependabot | Validação sem credenciais | — |
 
-O evento de deploy é `pull_request: closed` com `merged == true`. Push direto
-não faz apply. Promova mudanças por PR para develop e depois por PR de develop
-para main. Crie a branch develop a partir de main na preparação inicial.
+O evento de deploy é `pull_request_target: closed` com `merged == true`. Isso
+permite que PRs vindos de fork façam deploy somente depois do merge, usando o
+workflow e os secrets do repositório base. Push direto não faz apply. Promova
+mudanças por PR para develop e depois por PR de develop para main. Crie a
+branch develop a partir de main na preparação inicial.
 
 O job `terraform` depende do sucesso de `validate`. O plano do PR aparece nos
 logs e não é reaproveitado após o merge: um novo `deployment.tfplan` é gerado
@@ -199,9 +201,18 @@ da CI estão no [README](../README.md). A validação com mocks continua usando
 
 ## Situação desta entrega
 
-Pipeline e ambientes implementados e verificados localmente. Nenhum plan ou
-apply real foi executado. Ainda são necessários o bucket, as variables/secrets
-dos GitHub Environments e uma sessão AWS completa ou role OIDC. O acesso GitHub
-local recebeu HTTP 403 ao consultar variables/secrets; sua configuração deve
-ser feita com permissão de administração do repositório. As chaves temporárias
-recebidas anteriormente ainda estão sem AWS_SESSION_TOKEN.
+Pipeline e ambientes implementados e verificados localmente. A sessão AWS
+temporária foi completada e sts get-caller-identity confirmou a conta
+213284176265. O bucket `tech-challenge-infra-db-tfstate-213284176265` foi criado
+em us-east-1 com versionamento e bloqueio de acesso público. Use esse nome em
+TF_STATE_BUCKET para o laboratório; não é necessário recriar o bucket.
+
+O backend local foi inicializado para homologação e um plan real foi gerado:
+28 recursos para criar, zero alterações e zero exclusões. Nenhum apply foi
+executado e o RDS ainda não foi criado.
+
+Continuam pendentes as variables/secrets dos GitHub Environments. O acesso
+GitHub local recebeu HTTP 403 ao consultar essas definições; sua configuração
+deve ser feita com as permissões correspondentes no repositório. Cadastre a
+sessão completa nos secrets dos ambientes, incluindo AWS_SESSION_TOKEN, ou use
+OIDC. O apply continua sendo executado após merge pela pipeline.

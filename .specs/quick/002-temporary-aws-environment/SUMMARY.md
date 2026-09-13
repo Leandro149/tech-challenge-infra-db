@@ -9,8 +9,12 @@ null mantém compatibilidade para quem não configurar uma conta permitida.
 
 fmt, validate e os nove testes com AWS simulada passaram.
 
-A autenticação real depende do AWS_SESSION_TOKEN da mesma sessão das chaves
-temporárias. Nenhuma chamada autenticada, plan ou apply foi executada.
+Token recebido posteriormente e salvo no profile default local.
+sts get-caller-identity confirmou acesso à conta 213284176265 com a sessão
+voc labs. Configuração e autenticação local concluídas.
+
+A preparação posterior de backend e plan de homologação está registrada
+na feature TC3-09; nenhum apply foi executado.
 
 ## Commit
 
