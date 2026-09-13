@@ -11,3 +11,9 @@
 Verificação local: fmt, init sem backend, validate e terraform test com mocks.
 Verificação AWS: aluno executa plan/apply e teste de conexão nas aplicações.
 
+## Evidência da implementação
+
+R1–R5 implementados e verificados localmente com Terraform 1.16.2 e AWS
+provider 6.64.0: fmt, init sem backend e validate aprovados;
+terraform test aprovado com 9 cenários e nenhuma falha.
+Implantação e conectividade AWS aguardam execução na conta do aluno.
