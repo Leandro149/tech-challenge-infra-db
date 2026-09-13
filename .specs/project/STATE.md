@@ -21,8 +21,8 @@
 
 ## Decisões
 
-- Não executar apply: escopo é entregar o projeto; nenhuma conta AWS foi
-  indicada. Não há recursos provisionados nem credenciais manipuladas.
+- Escopo atual: configurar o acesso ao ambiente temporário informado pelo
+  usuário. Nenhum apply executado; recursos AWS não foram provisionados.
 - Região exemplo us-east-1; Single-AZ de laboratório por padrão.
 - RDS privado com TLS, backups de 7 dias, proteção contra exclusão e
   snapshot final obrigatório por padrão, com identificador explícito.
@@ -60,3 +60,19 @@ fornecer também vpc_id e map_public_ip_on_launch nos overrides de subnet.
 | # | Descrição | Data | Commit | Status |
 | --- | --- | --- | --- | --- |
 | 001 | Checksums do provider para Windows/Linux na CI | 2026-09-13 | fix(terraform): lock AWS provider for Windows and Linux | Done |
+
+## Ambiente temporário — 2026-09-13
+
+- Usuário autorizou configurar o acesso à conta 213284176265, região us-east-1.
+- Credenciais recebidas salvas somente em ~/.aws/credentials, profile default;
+  região e saída JSON em ~/.aws/config. Nenhum arquivo AWS anterior existia.
+- terraform.tfvars local, ignorado pelo Git, criado a partir do exemplo,
+  com aws_region e aws_account_id para o ambiente informado.
+- Provider usa allowed_account_ids quando aws_account_id é definido;
+  o comportamento existente é mantido quando essa variável é null.
+- fmt, validate e nove testes com mock_provider aprovados.
+- Falta AWS_SESSION_TOKEN da mesma sessão das credenciais temporárias.
+  Não tentar autenticação, plan ou apply antes de completar a sessão.
+- AWS CLI não está instalada. Terraform 1.16.2 permanece disponível na
+  pasta temporária tc3-05-terraform-tools.
+- Quick task 002: configuração preparada; validação do acesso pendente do token.

@@ -4,6 +4,17 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_account_id" {
+  description = "ID da conta AWS permitida. Quando definido, impede operações em outra conta."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.aws_account_id == null ? true : can(regex("^[0-9]{12}$", var.aws_account_id))
+    error_message = "O ID da conta AWS deve conter exatamente 12 dígitos."
+  }
+}
+
 variable "project_name" {
   description = "Nome do projeto usado nos identificadores dos recursos."
   type        = string
@@ -198,4 +209,3 @@ variable "final_snapshot_identifier" {
     error_message = "O snapshot deve começar por letra minúscula, ter até 255 caracteres e não ter hífens finais/consecutivos."
   }
 }
-
