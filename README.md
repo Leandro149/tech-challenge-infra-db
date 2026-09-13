@@ -1,8 +1,13 @@
-# TC3-05 — Terraform do PostgreSQL
+# TC3-05 / TC3-09 — PostgreSQL e CI/CD Terraform
 
 Projeto de infraestrutura para o Tech Challenge da pós-graduação. Provisiona
 Amazon RDS PostgreSQL em rede privada, com backups, parâmetros e acesso
 controlado para aplicações AWS Lambda e Amazon EKS.
+
+A pipeline executa `fmt`, `validate` e testes em pushes, gera `plan` em PRs
+internos e executa `apply` após merge. `develop` usa homologação e `main` usa
+produção, com configurações e state separados. A preparação do GitHub e da AWS
+está no [guia de CI/CD](docs/cicd.md).
 
 ## Atendimento à atividade
 
@@ -27,14 +32,19 @@ controlado para aplicações AWS Lambda e Amazon EKS.
 | `terraform.tfvars.example` | Exemplo para criar uma rede nova. |
 | `examples/existing-vpc.tfvars.example` | Exemplo para usar a rede do EKS/Lambda. |
 | `tests/infrastructure.tftest.hcl` | Testes locais com AWS simulada. |
-| `.github/workflows/terraform.yml` | Validação em push e pull request. |
+| `backend.tf`, `environments/*/backend.hcl` | Backend S3 e chaves de state por ambiente. |
+| `environments/*/environment.tfvars.json` | Configurações de homologação e produção. |
+| `tests/environments/environment.tftest.hcl` | Testes das configurações reais dos ambientes. |
+| `.github/workflows/terraform.yml` | Validação, plan em PR e apply após merge. |
+| `docs/cicd.md` | Configuração de CI/CD, backend e autenticação AWS. |
 
 ## Pré-requisitos
 
-- Terraform >= 1.9 e < 2.0; a CI usa 1.16.2.
+- Terraform >= 1.10 e < 2.0; a CI usa 1.16.2 e locking nativo do S3.
 - AWS CLI e uma conta com credenciais configuradas.
 - Permissões para gerenciar VPC/subnets/SGs/endpoints, RDS, logs e a policy IAM,
   além das permissões de Secrets Manager/KMS necessárias para criação do RDS.
+- Bucket S3 de state preparado conforme o [guia de CI/CD](docs/cicd.md).
 - Git, se desejar versionar e enviar a entrega.
 
 Instale o Terraform pelo [guia oficial](https://developer.hashicorp.com/terraform/install)
@@ -47,20 +57,25 @@ Não coloque chaves AWS nos arquivos Terraform.
 
 Os comandos abaixo funcionam no PowerShell, dentro deste diretório.
 
-```powershell
-Copy-Item terraform.tfvars.example terraform.tfvars
-```
-
-Edite `terraform.tfvars`. Confirme a região e um `final_snapshot_identifier`
-único para este laboratório. O exemplo usa Single-AZ para reduzir o custo;
-habilite `multi_az = true` quando precisar de standby em outra zona.
+Escolha `homologacao` ou `producao` e edite o `environment.tfvars.json`
+correspondente. Homologação usa Single-AZ; produção usa Multi-AZ e 14 dias de
+backup. Confirme a região, o bucket previamente criado e um
+`final_snapshot_identifier` único para cada ciclo do laboratório.
 
 ```powershell
-aws sts get-caller-identity
-terraform init
+$deploymentEnvironment = "homologacao"
+$stateBucket = "NOME_DO_BUCKET_DE_STATE"
+$awsRegion = "us-east-1"
+$expectedAccountId = "213284176265"
+
+$actualAccountId = aws sts get-caller-identity --query Account --output text
+if ($LASTEXITCODE -ne 0 -or $actualAccountId -ne $expectedAccountId) {
+  throw "Verifique as credenciais e a conta AWS antes de inicializar."
+}
+terraform init -reconfigure "-backend-config=environments/$deploymentEnvironment/backend.hcl" "-backend-config=bucket=$stateBucket" "-backend-config=region=$awsRegion"
 terraform fmt -check -recursive
 terraform validate
-terraform plan -out=deployment.tfplan
+terraform plan "-var-file=environments/$deploymentEnvironment/environment.tfvars.json" "-var=aws_region=$awsRegion" "-var=aws_account_id=$expectedAccountId" "-out=deployment.tfplan"
 terraform apply deployment.tfplan
 terraform output
 ```
@@ -82,9 +97,9 @@ automáticos neste projeto.
 
 Se as aplicações já existem, use a VPC delas para manter a conectividade privada:
 
-```powershell
-Copy-Item examples/existing-vpc.tfvars.example terraform.tfvars
-```
+Use `examples/existing-vpc.tfvars.example` como referência e adicione os campos
+`existing_*` ao `environment.tfvars.json` do ambiente escolhido. Mantenha o
+`environment` como `staging` ou `prod`, conforme o arquivo.
 
 Substitua os IDs fictícios pelos reais. Informe subnets privadas de banco em
 duas zonas diferentes e subnets privadas de aplicação. Quando criar o endpoint
@@ -205,6 +220,8 @@ terraform init -backend=false -input=false
 terraform fmt -check -recursive
 terraform validate
 terraform test -no-color
+terraform test -no-color -test-directory=tests/environments "-var-file=environments/homologacao/environment.tfvars.json"
+terraform test -no-color -test-directory=tests/environments "-var-file=environments/producao/environment.tfvars.json"
 ```
 
 Os testes usam `mock_provider "aws"`: simulam recursos e consultas, verificando
@@ -233,11 +250,12 @@ e na demonstração de conexão.
 
 ## State e custos
 
-O backend padrão é local. `terraform.tfvars`, planos e state estão ignorados no
-Git; `.terraform.lock.hcl` deve ser versionado. Guarde o state para administrar
-e excluir os recursos. Para trabalho em equipe, configure backend S3 com
-criptografia, versionamento, acesso restrito e locking antes de compartilhar
-a operação; não envie o state ao repositório.
+O backend é S3, com criptografia e lock nativo; homologação e produção possuem
+chaves distintas. O bucket deve existir e ter versionamento e bloqueio de
+acesso público. `terraform.tfvars`, planos e state estão ignorados no Git;
+`.terraform.lock.hcl` deve ser versionado. Inicialize o backend do ambiente
+correto antes de administrar ou excluir seus recursos. Para migrar state
+local existente, use o procedimento do [guia de CI/CD](docs/cicd.md).
 
 Há cobrança pelo RDS, armazenamento, Secrets Manager, endpoints Interface por
 zona, logs e backups/snapshots conforme uso e plano da conta. Single-AZ reduz
@@ -247,13 +265,14 @@ podem continuar gerando custo após excluir a instância.
 
 ## Remover o laboratório
 
-Primeiro edite `terraform.tfvars`, definindo `deletion_protection = false`.
+Primeiro edite o `environment.tfvars.json` do ambiente escolhido, definindo
+`deletion_protection = false`. Inicialize o mesmo backend usado no deploy.
 Confirme que o nome do snapshot final ainda não existe. Depois execute:
 
 ```powershell
-terraform plan -out=cleanup-preparation.tfplan
+terraform plan "-var-file=environments/$deploymentEnvironment/environment.tfvars.json" "-var=aws_region=$awsRegion" "-var=aws_account_id=$expectedAccountId" "-out=cleanup-preparation.tfplan"
 terraform apply cleanup-preparation.tfplan
-terraform plan -destroy -out=destroy.tfplan
+terraform plan -destroy "-var-file=environments/$deploymentEnvironment/environment.tfvars.json" "-var=aws_region=$awsRegion" "-var=aws_account_id=$expectedAccountId" "-out=destroy.tfplan"
 terraform apply destroy.tfplan
 ```
 
@@ -274,4 +293,3 @@ não precisar mais dos dados.
 - [Lambda com acesso à VPC](https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html)
 - [Security Groups for Pods no EKS](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [Mocks de providers no Terraform](https://developer.hashicorp.com/terraform/language/tests/mocking)
-

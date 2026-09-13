@@ -21,8 +21,8 @@
 
 ## Decisões
 
-- Escopo atual: configurar o acesso ao ambiente temporário informado pelo
-  usuário. Nenhum apply executado; recursos AWS não foram provisionados.
+- Escopo atual: TC3-09, implementar CI/CD com plan em PR e apply após merge,
+  homologação e produção separados. Nenhum apply real executado nesta sessão.
 - Região exemplo us-east-1; Single-AZ de laboratório por padrão.
 - RDS privado com TLS, backups de 7 dias, proteção contra exclusão e
   snapshot final obrigatório por padrão, com identificador explícito.
@@ -76,3 +76,34 @@ fornecer também vpc_id e map_public_ip_on_launch nos overrides de subnet.
 - AWS CLI não está instalada. Terraform 1.16.2 permanece disponível na
   pasta temporária tc3-05-terraform-tools.
 - Quick task 002: configuração preparada; validação do acesso pendente do token.
+
+## TC3-09 — Implementação concluída em 2026-09-13
+
+- Workflow Terraform CI/CD: push valida; PR interno para develop/main planeja;
+  PR closed com merged=true gera plano novo e aplica o arquivo salvo.
+- develop seleciona homologacao/staging; main seleciona producao/prod.
+- Backend S3 parcial com encrypt e use_lockfile; chave própria por ambiente.
+  Terraform mínimo elevado para 1.10; CI permanece em 1.16.2.
+- Ambientes versionados em environments/*/environment.tfvars.json, com CIDRs,
+  nomes RDS, snapshots e parâmetros de disponibilidade/backup próprios.
+- Job de AWS depende de validate, usa Environment e concurrency por ambiente,
+  verifica conta, permite OIDC ou secrets, exige token para chave temporária
+  e rejeita apply de commit superado na branch. Forks/Dependabot sem acesso AWS.
+- Windows/Linux: fmt, init sem backend, validate e 11 testes aprovados
+  (nove existentes e um por ambiente). Testes também verificam contrato
+  staging/prod nos arquivos e chaves corretas de state.
+- actionlint 1.7.12 aprovado. Dez cenários dos scripts reais preflight/apply
+  aprovados com comandos simulados e sem chamadas AWS.
+- README e docs/cicd.md documentam preparação S3/IAM/OIDC/secrets, configuração
+  de environments, branches, migração de state e execução local.
+- Commits: 38613b5 (backend/ambientes), ddb2445 (pipeline), 5ec9512 (contratos).
+
+### Ativação pendente
+
+- Publicar os commits locais e a branch develop no GitHub.
+- Preparar/verificar bucket e IAM e configurar variables/secrets dos ambientes.
+  gh variable list e gh secret list retornaram HTTP 403; não foi possível
+  consultar/configurar essas definições com a autenticação atual.
+- Completar a sessão AWS com token correspondente ou configurar role OIDC.
+- Executar PR/merge em homologação e promover por PR para produção.
+- Nenhum plan/apply real ou recurso de backend criado nesta sessão.

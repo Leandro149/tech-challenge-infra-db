@@ -25,5 +25,8 @@ confirmadamente. Não alterar os projetos Lambda/EKS.
 
 ## Estado
 
-Implementação e verificações locais em andamento. Plan/apply reais dependem
-da configuração do GitHub e do backend AWS.
+Implementação concluída e verificada localmente. Windows e Linux: fmt,
+init sem backend, validate, nove testes existentes e um teste por ambiente
+aprovados. Workflow aprovado por actionlint e dez cenários de preflight/apply
+com comandos simulados. Plan/apply reais e publicação dependem da configuração
+do GitHub e do backend AWS.
