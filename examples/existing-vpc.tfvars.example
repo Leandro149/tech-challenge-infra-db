@@ -1,0 +1,20 @@
+aws_region   = "us-east-1"
+project_name = "tech-challenge"
+environment  = "dev"
+
+# Substitua pelos IDs reais da VPC e subnets do projeto EKS/Lambda.
+existing_vpc_id                 = "vpc-0123456789abcdef0"
+existing_database_subnet_ids    = ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
+existing_application_subnet_ids = ["subnet-0123456789abcdef2", "subnet-0123456789abcdef3"]
+
+existing_client_security_group_ids = {
+  lambda_app = "sg-0123456789abcdef0"
+  eks_nodes  = "sg-0123456789abcdef1"
+}
+
+# Se já houver endpoint com DNS privado nessa VPC, use false.
+create_secrets_manager_endpoint = true
+deletion_protection             = true
+skip_final_snapshot             = false
+final_snapshot_identifier       = "tech-challenge-dev-final-20260913"
+
