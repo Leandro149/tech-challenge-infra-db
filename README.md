@@ -213,6 +213,20 @@ inválidas. Não precisam de credenciais AWS e não provisionam recursos, inclus
 nos testes com `command = apply`. O primeiro `init` precisa de internet para
 baixar o provider. A CI executa as mesmas verificações.
 
+O lock inclui checksums para Windows (`windows_amd64`) e para o runner Linux
+da CI (`linux_amd64`). Ao atualizar o provider, gere e versione os checksums
+das duas plataformas antes de enviar a alteração:
+
+```powershell
+terraform providers lock -platform=windows_amd64 -platform=linux_amd64
+```
+
+A CI usa `terraform init -backend=false -input=false -lockfile=readonly`.
+Se faltar o checksum `h1` do Linux, o `init` pode baixar o provider sem salvar
+esse checksum, e o `validate` falha com `does not match any of the checksums`.
+O comando acima prepara o lock para ambas as plataformas, conforme a
+[documentação oficial](https://developer.hashicorp.com/terraform/cli/commands/providers/lock).
+
 Os mocks validam a configuração. Disponibilidade regional, quotas, permissões
 IAM e conectividade real precisam ser verificados na conta no `plan`/`apply`
 e na demonstração de conexão.

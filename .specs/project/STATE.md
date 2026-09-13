@@ -42,3 +42,21 @@
 Overrides de data sources nos testes substituem os defaults do mock;
 fornecer também vpc_id e map_public_ip_on_launch nos overrides de subnet.
 
+## Correção da CI — 2026-09-13
+
+- Run 34770105563 falhou no validate: o lock tinha h1 do Windows e hashes zh,
+  mas não tinha h1 do Linux. O init com -lockfile=readonly verificou o pacote
+  assinado, porém não salvou o h1 necessário para verificar o provider extraído.
+- Erro reproduzido em container Linux com Terraform 1.16.2 e o lock original.
+- terraform providers lock -platform=windows_amd64 -platform=linux_amd64
+  acrescentou somente o h1 do Linux, mantendo AWS 6.64.0 e os hashes existentes.
+- Windows e Linux: fmt, init com -lockfile=readonly, validate e os nove testes
+  com AWS simulada aprovados; SHA256 do lock inalterado após cada execução.
+- README documenta como preparar o lock para ambas as plataformas.
+- Correção local; envio ao GitHub e nova execução da CI pendentes.
+
+## Quick Tasks Completed
+
+| # | Descrição | Data | Commit | Status |
+| --- | --- | --- | --- | --- |
+| 001 | Checksums do provider para Windows/Linux na CI | 2026-09-13 | fix(terraform): lock AWS provider for Windows and Linux | Done |
