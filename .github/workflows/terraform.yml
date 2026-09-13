@@ -140,7 +140,7 @@ jobs:
             -var-file="environments/${DEPLOY_ENV}/environment.tfvars.json" \
             -out=deployment.tfplan
       - name: Terraform apply after merge
-        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
