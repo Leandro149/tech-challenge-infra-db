@@ -21,6 +21,16 @@ run "environment_configuration" {
   command = plan
 
   assert {
+    condition     = contains(["staging", "prod"], var.environment) && jsondecode(file("environments/homologacao/environment.tfvars.json")).environment == "staging" && jsondecode(file("environments/producao/environment.tfvars.json")).environment == "prod"
+    error_message = "Os arquivos de homologação e produção devem selecionar staging e prod, respectivamente."
+  }
+
+  assert {
+    condition     = can(regex("(?m)^key\\s*=\\s*\"tech-challenge-infra-db/${var.environment == "prod" ? "producao" : "homologacao"}/terraform\\.tfstate\"\\s*$", file("environments/${var.environment == "prod" ? "producao" : "homologacao"}/backend.hcl")))
+    error_message = "Os backends devem usar as chaves próprias de homologação e produção, sem compartilhar state."
+  }
+
+  assert {
     condition     = aws_db_instance.this.identifier == "${var.project_name}-${var.environment}-postgres" && aws_cloudwatch_log_group.postgresql.name == "/aws/rds/instance/${var.project_name}-${var.environment}-postgres/postgresql"
     error_message = "Os identificadores RDS e logs devem separar os ambientes."
   }
